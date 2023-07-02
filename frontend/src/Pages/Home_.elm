@@ -33,7 +33,7 @@ init shared route _ =
     case route.hash of
         Just hash ->
             ( {}
-            , Effect.pushRoute { path = Route.Path.Tutorial, query = Dict.fromList [ ( "url", hash ) ], hash = Nothing }
+            , Effect.replaceRoute { path = Route.Path.Tutorial, query = Dict.fromList [ ( "url", hash ) ], hash = Nothing }
             )
 
         Nothing ->

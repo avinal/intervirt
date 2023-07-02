@@ -3,18 +3,21 @@ module Layouts.Tutorial exposing (Model, Msg, Props, layout)
 import Browser.Events as BE
 import Debug
 import Effect exposing (Effect)
-import Html exposing (Html, button, div, footer, header, iframe, text)
-import Html.Attributes exposing (class, src, style)
+import Html exposing (Html, button, div, footer, header, iframe, progress, text)
+import Html.Attributes exposing (class, src, step, style, width)
 import Html.Events as HE
 import Json.Decode as Decode
 import Layout exposing (Layout)
 import Route exposing (Route)
 import Shared
+import Utils.JsonParser.Scenario exposing (Step)
 import View exposing (View)
 
 
 type alias Props =
-    {}
+    { step : Int
+    , totalSteps : Int
+    }
 
 
 layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
@@ -22,7 +25,7 @@ layout props shared route =
     Layout.new
         { init = init shared
         , update = update
-        , view = view
+        , view = view props
         , subscriptions = subscriptions
         }
 
@@ -44,7 +47,9 @@ type ResizeState
 
 init : Shared.Model -> () -> ( Model, Effect Msg )
 init shared _ =
-    ( { resizeState = NotResizing (0.5 * shared.screenWidth), screenWidth = shared.screenWidth }
+    ( { resizeState = NotResizing (0.5 * shared.screenWidth)
+      , screenWidth = shared.screenWidth
+      }
     , Effect.none
     )
 
@@ -61,10 +66,6 @@ type Msg
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
-    let
-        _ =
-            Debug.log "model" model.resizeState
-    in
     case msg of
         ResizeStart ->
             ( { model | resizeState = Resizing (toFraction model.resizeState) }
@@ -72,13 +73,6 @@ update msg model =
             )
 
         ResizeInProgress isDown fraction ->
-            let
-                _ =
-                    Debug.log "rezinig" fraction
-
-                _ =
-                    Debug.log "isDown" isDown
-            in
             ( { model
                 | resizeState =
                     if isDown then
@@ -112,10 +106,6 @@ toFraction resizeState =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    let
-        _ =
-            Debug.log "submodel" model
-    in
     case model.resizeState of
         Resizing _ ->
             Sub.batch
@@ -127,12 +117,6 @@ subscriptions model =
             Sub.none
 
 
-
--- decodeFraction : Decode.Decoder Float
--- decodeFraction =
---     Decode.map Decode.field "pageX" Decode.float
-
-
 decodeButton : Decode.Decoder Bool
 decodeButton =
     Decode.field "buttons" (Decode.map (\buttons -> buttons == 1) Decode.int)
@@ -142,18 +126,18 @@ decodeButton =
 -- VIEW
 
 
-view : { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
-view { toContentMsg, model, content } =
+view : Props -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
+view props { toContentMsg, model, content } =
     { title = content.title
     , body =
         [ div [ class containerClass ]
-            [ viewHeader model |> Html.map toContentMsg
+            [ viewHeader model content
             , div [ class paneContainerClass ]
-                [ viewContentPane model |> Html.map toContentMsg
+                [ viewContentPane model content
                 , viewResizer model |> Html.map toContentMsg
                 , viewTerminalPane model |> Html.map toContentMsg
                 ]
-            , viewFooter model |> Html.map toContentMsg
+            , viewFooter props |> Html.map toContentMsg
             ]
         ]
     }
@@ -174,11 +158,11 @@ toPointerEvent resizeState =
 
 
 headerClass =
-    "bg-blue-500 text-white p-4 flex items-center sticky top-0 z-10"
+    "bg-rose-800 text-white px-4 flex items-center sticky top-0 z-10 py-6"
 
 
 footerClass =
-    "bg-gray-800 text-white p-4 flex items-center justify-center sticky bottom-0 z-10"
+    "bg-rose-800 text-white p-4 flex items-center sticky bottom-0 z-10"
 
 
 containerClass =
@@ -193,18 +177,12 @@ paneContainerClass =
 -- Header
 
 
-viewHeader : Model -> Html Msg
-viewHeader model =
+viewHeader : Model -> View contentMsg -> Html contentMsg
+viewHeader model content =
     header
         [ class headerClass ]
-        [ div [ class "flex-grow text-lg font-semibold" ]
-            [ text "Tutorial Name" ]
-        , div [ class "absolute top-1/2 right-1/2 px-2 py-1 text-xs" ]
-            [ text (String.fromFloat <| toFraction model.resizeState / model.screenWidth) ]
-        , button [ class "ml-4 p-2 hover:bg-blue-700" ]
-            [ text "Button 1" ]
-        , button [ class "ml-4 p-2 hover:bg-blue-700" ]
-            [ text "Button 2" ]
+        [ div [ class "flex-grow text-3xl " ]
+            [ text content.title ]
         ]
 
 
@@ -212,10 +190,25 @@ viewHeader model =
 -- Footer
 
 
-viewFooter : Model -> Html Msg
-viewFooter _ =
+viewFooter : Props -> Html Msg
+viewFooter props =
+    let
+        widthp =
+            String.fromFloat (100.0 * (toFloat props.step / toFloat (props.totalSteps - 1))) ++ "%"
+
+        progress =
+            String.fromInt (props.step + 1) ++ "/" ++ String.fromInt props.totalSteps
+    in
     footer [ class footerClass ]
-        [ text "Footer Content"
+        [ div
+            [ class "w-1/3 border"
+            ]
+            [ div
+                [ class "bg-green-500 p-0.5 text-center text-xs font-medium leading-none text-primary-100"
+                , style "width" widthp
+                ]
+                [ text progress ]
+            ]
         ]
 
 
@@ -223,18 +216,15 @@ viewFooter _ =
 -- Pane 1
 
 
-viewContentPane : Model -> Html Msg
-viewContentPane model =
+viewContentPane : Model -> View contentMsg -> Html contentMsg
+viewContentPane model content =
     div
-        [ class "relative flex flex-col items-start justify-start overflow-x-hidden overflow-y-auto prose prose-zinc px-8 min-w-0 pb-12"
+        [ class "relative flex flex-col items-start justify-start overflow-x-hidden overflow-y-auto prose prose-zinc prose-headings:font-bold prose-a:decoration-2 hover:prose-a:decoration-rose-500 px-8 min-w-0 pb-12"
         , style "pointer-events" (toPointerEvent model.resizeState)
         , style "user-select" (toPointerEvent model.resizeState)
         , style "min-width" (String.fromFloat (100.0 * toFraction model.resizeState / model.screenWidth) ++ "vw")
         ]
-        [ Html.node "markdown-renderer"
-            [ Html.Attributes.attribute "markdowndata" data, class "relative w-full" ]
-            []
-        ]
+        content.body
 
 
 
@@ -244,7 +234,7 @@ viewContentPane model =
 viewResizer : Model -> Html Msg
 viewResizer model =
     div
-        [ class "bg-cyan-800 cursor-col-resize select-none w-2 flex-none"
+        [ class "bg-rose-500 cursor-col-resize select-none w-2 flex-none"
         , style "left" (String.fromFloat (100.0 * toFraction model.resizeState) ++ "vw")
         , HE.on "mousedown" (Decode.succeed ResizeStart)
         ]
@@ -264,40 +254,3 @@ viewTerminalPane model =
         , style "user-select" (toPointerEvent model.resizeState)
         ]
         [ iframe [ class "w-full h-full", src "http://localhost:8900/" ] [] ]
-
-
-data =
-    """
-### Language Rules
-
-As mentioned above CMake is a language itself hence there are some
-language rules related to syntax, comments, variables, etc.
-
-- There are two types of comment in CMake, both start with `#`
-    character. The first one is line comments, as clear by name it is
-    delimited by a newline. The other one is bracket comment and can
-    span until the matching brackets are found.
-
-    ```cmake
-    # This is a line comment and it ends with the line.
-
-    #[[This is a bracket comment and it can span up to multiple lines.
-    But it is only supported in CMake 3.0 or later.]]
-    ```
-
-- Variables in CMake are like any other programming language. They are
-    case-sensitive and have any alphanumeric characters. In general, it
-    is recommended using upper case names as variables. They can be
-    assigned and unassigned using `set` and `unset` commands. A variable
-    can be referenced using `${VARIABLE_NAME}`.
-
-    > CMake reserves some types of identifers:
-    >
-    > - begin with **CMAKE_**(upper-, lower-, or mixed-case)
-    > - begin with ***CMAKE***(upper-, lower-, or mixed-case)
-    > - begin with **_** followed by the name of any CMake Command
-
-- The CMake commands are case insensitive in the latest version (3.0)
-    of CMake. That means `message()`, `Message()` or `MESSAGE()` are all
-    same.
-"""

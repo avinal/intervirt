@@ -19,11 +19,13 @@
           "content": "width=device-width, initial-scale=1.0"
         }
       ],
-      "link": [],
-      "script": [
-        { "src": "https://cdn.tailwindcss.com?plugins=typography" },
-        { "src": "https://cdn.jsdelivr.net/npm/marked/marked.min.js" }
-      ]
+      "link": [
+        {
+          "rel": "stylesheet",
+          "href": "/main.css"
+        }
+      ],
+      "script": [{ "src": "https://cdn.jsdelivr.net/npm/marked/marked.min.js" }]
     },
     "router": {
       "useHashRouting": false
