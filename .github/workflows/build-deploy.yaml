@@ -67,3 +67,19 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
+
+  random-job1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check run
+        run: |
+          sleep 5
+          echo "oka pass"
+
+  random-job2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check run
+        run: |
+          sleep 5
+          echo "oka pass2"
