@@ -8,6 +8,7 @@ import Html.Attributes exposing (class)
 import Html.Events as HE
 import Http
 import Json.Decode as D
+import Json.Encode as Encode
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
@@ -107,6 +108,8 @@ type Msg
     = ContentFetch (Result Http.Error String)
     | JsonFetch (Result Http.Error Scenario)
     | ChangeStep StepType Int
+    | MyMsgHandler (Result Http.Error ())
+    | CreateVm
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -139,6 +142,15 @@ update msg model =
                     ( { model | step = model.step - 1 }
                     , Effect.sendCmd (fetchStep model (model.step - 1))
                     )
+
+        MyMsgHandler (Ok _) ->
+            ( model, Effect.none )
+
+        MyMsgHandler (Err err) ->
+            ( { model | error = Just (errorToString err) }, Effect.none )
+
+        CreateVm ->
+            ( {model | step = model.step +1} , Effect.batch [ Effect.sendCmd postVM, Effect.sendCmd (fetchStep model (model.step + 1)) ] )
 
 
 
@@ -196,9 +208,19 @@ view model =
                                     else
                                         ""
                                    )
-                        , HE.onClick (ChangeStep Next model.step)
+                        , HE.onClick <|
+                            if model.step == 0 then
+                                CreateVm
+
+                            else
+                                ChangeStep Next model.step
                         ]
-                        [ text "Next" ]
+                        [ if model.step == 0 then
+                            text "Start"
+
+                          else
+                            text "Next"
+                        ]
                     ]
                 ]
             }
@@ -245,3 +267,23 @@ everythingIsStep intro finish steps =
     [ [ introStep ], steps, [ finishStep ] ]
         |> List.concat
         |> Array.fromList
+
+
+postVM : Cmd Msg
+postVM =
+    let
+        url =
+            "http://localhost:8089/vm"
+
+        body =
+            Encode.object
+                [ ( "vm_name", Encode.string "fedoraq" )
+                , ( "image_name", Encode.string "quay.io/kubevirt/fedora-cloud-container-disk-demo:latest" )
+                , ( "memory", Encode.string "4G" )
+                ]
+    in
+    Http.post
+        { url = url
+        , body = Http.jsonBody body
+        , expect = Http.expectWhatever MyMsgHandler -- Replace `MyMsgHandler` with your actual Msg handler for the response
+        }

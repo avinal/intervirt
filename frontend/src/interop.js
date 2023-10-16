@@ -1,3 +1,4 @@
+import "./web-components/prism.js";
 class MarkdownRenderer extends HTMLElement {
   constructor() {
     super();
@@ -33,7 +34,7 @@ class MarkdownRenderer extends HTMLElement {
           return {
             type: "code",
             raw: match[0],
-            lang: "e-" + language, // Use lang field to store the isExecutable flag
+            lang: "e-" + "shell", // Use lang field to store the isExecutable flag
             text: code,
           };
         }
@@ -58,12 +59,27 @@ class MarkdownRenderer extends HTMLElement {
     // };
 
     // Custom renderer for the code block
-    renderer.code = (code, infostring) => {
+    renderer.code = (code, infostring, escaped) => {
       const checkE = infostring.split("-");
       let isExecutable = checkE.length == 2;
       const lang = ((isExecutable ? checkE[1] : infostring) || "").match(
         /\S*/
       )[0];
+
+      function highlight(code, lang)  {
+        const grammer = Prism.languages[lang];
+        if (!grammer) {
+          console.warn(`Unable to find prism highlight for '${lang}'`);
+          return;
+        }
+        return Prism.highlight(code, grammer, lang);
+      };
+      const out = highlight(code, lang)
+      if (out != null && out !== code) {
+        escaped = true;
+        code = out
+      }
+
 
       code = code.replace(/\n$/, "") + "\n";
 
@@ -80,19 +96,23 @@ class MarkdownRenderer extends HTMLElement {
         // Render as a clickable block
         return (
           '<pre class="hover:ring hover:cursor-pointer hover:ring-green-500"><code >' +
-          escapeHTML(code) +
+          (escaped ? code : escapeHTML(code, true)) +
           "</code></pre>\n"
         );
       } else if (!lang) {
         // Render as a normal code block without language
-        return "<pre><code>" + escapeHTML(code) + "</code></pre>\n";
+        return (
+          "<pre><code>" +
+          (escaped ? code : escapeHTML(code, true)) +
+          "</code></pre>\n"
+        );
       } else {
         // Render as a normal code block with language
         return (
           '<pre><code class="' +
           escapeHTML(lang) +
           '">' +
-          escapeHTML(code) +
+          (escaped ? code : escapeHTML(code, true)) +
           "</code></pre>\n"
         );
       }
