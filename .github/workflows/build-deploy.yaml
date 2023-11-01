@@ -51,19 +51,30 @@ jobs:
       - name: change path in index.html
         run: sed -i -e 's|href="/main.css"|href="/intervirt/main.css"|' -e 's|src="/assets/\(.*\).js"|src="/intervirt/assets/\1.js"|' ./dist/index.html
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: frontend/dist/
+      
 
   # Deployment job
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
+        run: echo "check"
+
+  random-job1:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: check run
+        run: |
+          sleep 5
+          echo "oka pass"
+
+  random-job2:
+    runs-on: ubuntu-latest
+    needs: random-job1
+    steps:
+      - name: check run
+        run: |
+          sleep 5
+          echo "oka pass2"
