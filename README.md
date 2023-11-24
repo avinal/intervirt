@@ -9,6 +9,7 @@ Intervirt is an open-source project aimed at providing a platform for running in
 - [Introduction](#introduction)
 - [Project Structure](#project-structure)
 - [Installation](#installation)
+- [Value Proposition: Why Self-Hosted?](#value-proposition-why-self-hosted)
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
@@ -17,6 +18,30 @@ Intervirt is an open-source project aimed at providing a platform for running in
 ### Introduction
 
 Intervirt is developed with a Golang backend and Elm frontend, focusing on ease of use and extensibility. Users can input tutorial links, and Intervirt will run these tutorials locally on the user's machine.
+
+### Value Proposition: Why Self-Hosted?
+
+- Cost-Effectiveness: The primary appeal is cost savings. Services like Katacoda or Killer Koda charge for access to their infrastructure, which hosts the interactive environments. By contrast, a self-hosted solution eliminates or significantly reduces these costs, as users utilize their own hardware or cloud instances.
+
+- Customizability and Control: Users have complete control over the environment. They can customize the setup, choose specific versions of tools and software, and tweak the system to their preferences or needs.
+
+- Privacy and Security: In a self-hosted environment, sensitive data and configurations remain within the user's control, offering enhanced privacy and security compared to using a third-party hosted service.
+
+- Learning and Educational Value: Setting up and maintaining a self-hosted platform can provide valuable learning experiences, especially for users interested in the technical aspects of Kubernetes and virtualization.
+
+- No Vendor Lock-in: Users are not tied to the policies, pricing, or availability of a specific vendor. They can modify, extend, or migrate their setup as they see fit.
+
+- Community and Open Source Benefits: As an open-source project, Intervirt can benefit from community contributions, leading to a diverse range of features and improvements over time.
+
+- Offline Access: Users can access their environments without an internet connection, which can be useful for users with limited or unreliable internet access.
+
+- Performance: Self-hosted environments can offer better performance than hosted solutions, as users can choose their own hardware or cloud instances.
+
+- Scalability: Users can scale their environments to their needs, without being limited by the policies or pricing of a third-party service.
+
+- Ease of Use: Intervirt aims to be easy to use, with a simple interface and minimal setup required.
+
+- Flexibility: Users can run any tutorial they want, without being limited to the tutorials offered by a third-party service.
 
 ### Project Structure
 
